@@ -36,13 +36,13 @@ save(Dir) :-
 launcher :-
     new(Dialog, dialog("Welcome to Planit")),
     time:now(Yr/Month/Day, _Hr:_Min),
-    new(MonthlyCal, monthly_calendar(Yr, Month)),
-    new(DailyCal, daily_calendar(Yr, Month, Day)),
+    time:monthly_calendar(Yr, Month, MonthlyCal),
+    time:daily_calendar(Yr, Month, Day, DailyCal),
+    
     send(Dialog, append, button('monthly calendar', message(MonthlyCal, open)), below),
     send(Dialog, append, button('daily calendar', message(DailyCal, open)), below),
     send(Dialog, open).
     
 % ?- snap:launcher.
-%@ true.
 
 % ?- snap:save("~/prolog/").
