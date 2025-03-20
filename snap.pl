@@ -1,4 +1,4 @@
-:- module(snap, []).
+:- module(snap, [save/1, launcher/1, get_method/4]).
 
 :- use_module(library(pce)).
 :- use_module(library(clpfd)).
@@ -6,7 +6,7 @@
 :- use_module(repl).
 :- use_module(time).
 
-save(Dir, Name, Imports) :-
+save(Dir, Name, ExtraDirectives) :-
     format(string(File), "~s/~s.pl", [Dir, Name]),
     expand_file_name(File, [FileExpanded]),
     (exists_file(FileExpanded)
@@ -17,39 +17,46 @@ save(Dir, Name, Imports) :-
        ; fail)
     ; true),
     open(FileExpanded, write, Stream),
+    module_property(Name, exports(Exports)),
     with_output_to(Stream,
-                   (format(":- module(~s, []).\n", [Name]),
-                    forall(member(Import, Imports),
-                           format(":- use_module(~w).\n",
-                                  [Import])),
+                   (format(":- module(~s, ~w).\n", [Name, Exports]),
+                    
+                    forall(member(Directive, ExtraDirectives), format(":- ~w.\n", [Directive])),
+                    
                     listing(Name:_))),
     close(Stream).
 
+:- multifile to_save/2.
+
+to_save(snap, [use_module(library(pce)),
+               use_module(library(clpfd)),
+               use_module(time, [monthly_calendar/1, daily_calendar/1]),
+               use_module(repl, [repl/1])]).
+
 save(Dir) :-
-    save(Dir,
-         snap,
-         [library(pce),
-          library(clpfd),
-          time,
-          repl]),
-    save(Dir,
-         repl,
-         [library(pce)]),
-    save(Dir,
-         time,
-         [library(pce),
-          library(clpfd)]).
+    forall(to_save(Name, ExtraDirectives),
+           save(Dir, Name, ExtraDirectives)).
+    %% save(Dir,
+    %%      snap,
+         
+    %%      [use_module(library(pce)),
+    %%       use_module(library(clpfd)),
+    %%       use_module(time, [monthly_calendar/1, daily_calendar/1]),
+    %%       use_module(repl, [repl/1])]),
+    %% save(Dir,
+    %%      repl,
+    %%      [use_module(library(pce))]),
+    %% save(Dir,
+    %%      time,
+    %%      [use_module(library(pce)),
+    %%       use_module(library(clpfd))]).
 
 :- multifile app/2.
-:- discontiguous app/2.
 
-launcher :-
+launcher(Dialog) :-
     new(Dialog, dialog("Welcome to Planit")),
-
-    forall(app(Name, Module:Fn/_Arity),
-           (compound_name_arguments(App1, Fn, [AppDialog]), App = Module:App1, App, send(Dialog, append, button(Name, message(AppDialog, open))))),
-    
-    send(Dialog, open).
+    forall(app(Name, App), send(Dialog, append, button(Name, message(@prolog, App)))),    
+   send(Dialog, open).
 
 
 get_method(Obj, Name, Type, Summary) :-
@@ -63,15 +70,16 @@ get_method(Obj, Name, Type, Summary) :-
 
 % ?- new(P, window), get_method(P, Name, Type, Summary).
     
-% ?- snap:launcher.
+% ?- snap:launcher(D).
 
-% ?- snap:save("~/prolog/").
+% ?- save("~/prolog/timeplans/").
+
+% ?- module_property(snap, exports(E)).
 
 % ?- assertz(time:rainy(2025/3/D)).
-%@ true.
 
-% ?- time:make_entry(entry(2025/3/D, 13:50, 17:20, "Board Games"), true, time:rainy(2025/3/D)).
-%@ true.
+% ?- make_entry(entry(2025/3/D, 10:0, 17:20, "Board Games"), true, time:rainy(2025/3/D)).
 
 % ?- time:make_entry(entry(2025/3/19, 10:0, 11:40, "See Doctor"), true, true).
-%@ true.
+
+% ?- time:make_entry(entry(2025/3/20, 9:0, 17:0, "Work on planner"), true, true).

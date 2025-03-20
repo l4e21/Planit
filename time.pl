@@ -1,7 +1,13 @@
-:- module(time, []).
+:- module(time, [monthly_calendar/1, daily_calendar/1]).
 
 :- use_module(library(pce)).
 :- use_module(library(clpfd)).
+
+:- multifile snap:to_save/2.
+
+snap:to_save(time,
+             [use_module(library(pce)),
+              use_module(library(clpfd))]).
 
 now(Yr/Month/Day, Hr:Min) :-
     get_time(Stamp),
@@ -282,11 +288,12 @@ daily_calendar(Yr, Month, Day) :-
 :- multifile snap:app/2.
 :- discontiguous snap:app/2.
 
-snap:app("Monthly Calendar", time:monthly_calendar/1).
-snap:app("Daily Calendar", time:daily_calendar/1).
+snap:app("Monthly Calendar", monthly_calendar).
+snap:app("Daily Calendar", daily_calendar).
 
 %% send(Dialog, append, button(next, message(@prolog, daily_calendar, Yr, Month, Day))),
 
 % ?- assertz(time:entry(1/1/1, 10:0, 12:0, "Buy soybeans")).
 
 % ?- time:daily_calendar(D), send(D, open).
+
