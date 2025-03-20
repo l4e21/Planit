@@ -66,3 +66,12 @@ get_method(Obj, Name, Type, Summary) :-
 % ?- snap:launcher.
 
 % ?- snap:save("~/prolog/").
+
+% ?- assertz(time:rainy(2025/3/D)).
+%@ true.
+
+% ?- time:make_entry(entry(2025/3/D, 13:50, 17:20, "Board Games"), true, time:rainy(2025/3/D)).
+%@ true.
+
+% ?- time:make_entry(entry(2025/3/19, 10:0, 11:40, "See Doctor"), true, true).
+%@ true.
