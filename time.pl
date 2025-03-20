@@ -117,44 +117,147 @@ make_entry(Entry, PreConditions, PostConditions) :-
 
 % ?- valid_time(Hr1:Min1), P1 in 0..1, P2 in 0..2, E = entry(2025/3/19, Hr1:Min1, 23:59, "Blah"), Hr1 in 7..15 #\/ P1 #= 1, Min1 in 0..10 #\/ P2 #= P1 + 1, P2 #< 2, label([Hr1, Min1]).
 
+init_buttons(Yr, Month, Frame) :-
+    get(Frame, member, "Dialog", Dialog),
+    %% get(Frame, member, "Picture", Picture),
 
-%% Ideas for a GUI
-%% - Calendar Page
-%% - Daily Page
-%% - Make an entry page
-%% - Specifics
+    send(Dialog, append,
+         new(_,
+             button('Last Month',
+                    message(@prolog, last_monthly_cal, Yr, Month, Frame))),
+         below),
 
-monthly_calendar(_Yr, Month, Dialog) :-
-    new(Dialog, dialog),
+    %% send(LastButton, name, "LastButton"),
+    send(Dialog, append,
+         new(_,
+             button('Next Month',
+                    message(@prolog, next_monthly_cal, Yr, Month, Frame))),
+         below).
 
+    %% update_buttons(Yr, Month, Frame)
+
+    %% send(NextButton, label, "NextButton"),
+    %% send(Picture, recogniser, new(@e, key_binding)),
+    %% send(@e, function, 'e', message(@prolog, next_monthly_cal, Yr, Month, Frame)).
+    %% send(@e, free),
+    %% send(Picture, recogniser, new(@e, key_binding)),
+    %% send(@e, function, 'e', message(NextButton, execute)).
+
+    %% send(Picture, recogniser, new(LastK, key_binding)),
+%% send(LastK, function, 'b', message(LastButton, execute)).
+
+update_buttons(Yr, Month, Frame) :-
+    get(Frame, member, "Dialog", Dialog),
+    
+    send(Dialog, clear),
+    init_buttons(Yr, Month, Frame),
+    send(Dialog, layout).
+
+
+next_monthly_cal(Yr, Month, Frame) :-
+    Month #= 12 #<==> Carryover,
+    NextMonth #= Month mod 12 + 1,
+    NextYr #= Yr + Carryover,
+    
+    update_calendar(NextYr, NextMonth, Frame),
+    update_buttons(NextYr, NextMonth, Frame).
+   
+ 
+last_monthly_cal(Yr, Month, Frame) :-
+    get(Frame, member, "Dialog", Dialog),
+    
+    Month #= 1 #<==> Carryover,
+    LastMonth #= Month - 1 + Carryover*12,
+    LastYr #= Yr - Carryover,
+
+    update_calendar(LastYr, LastMonth, Frame),
+
+    send(Dialog, clear),
+    
+    init_buttons(LastYr, LastMonth, Frame),
+    
+    send(Dialog, layout).
+
+update_calendar(Yr, Month, Frame) :-
+    get(Frame, member, "Picture", Picture),
+     
+    get(Picture, member, "Calendar", C),
+    get(Picture, member, "Header", H),
+    send(C, free),
+    send(H, free),
+
+    init_calendar(Yr, Month, Picture),
+    send(Frame, keyboard_focus, Picture).
+
+init_calendar(Yr, Month, Picture) :-    
+    Month in 1..12,
+    days_in_month(Month, Days),
     LineLength is 6,
+    
     PicWidth is 1200,
     PicHeight is 1200,
 
-    send(Dialog, append, new(Picture, picture)),
-    send(Picture, size, size(PicWidth, PicHeight)),
     send(Picture, display,  new(DeviceHeader, device)),
-    send(DeviceHeader, display, new(BoxHeader, box(PicWidth/1.2, 50)), point((PicWidth - PicWidth/1.2)/2, 0)),
+    send(Picture, display, new(DeviceCalendar, device), point(0, 100)),
+    
+    send(DeviceHeader, name, "Header"),
+    send(DeviceCalendar, name, "Calendar"),
+
+        send(DeviceHeader, display, new(BoxHeader, box(PicWidth/1.2 + 50, 50)), point((PicWidth - PicWidth/1.2)/2 + 50, 50)),
     send(BoxHeader, fill_pattern, colour(white)),
     send(BoxHeader, pen, 2),
     month_name(Month, MonthName),
-    send(DeviceHeader, display, new(_, text(MonthName)), point(PicWidth/2, 10)),
-    send(Picture, display, new(DeviceCalendar, device), point(0, 100)),
-    days_in_month(Month, Days),
+    format(string(HeaderStr), "~s ~w", [MonthName, Yr]),
+    send(DeviceHeader, display, new(_, text(HeaderStr)), point(PicWidth/2 + 50, 10 + 50)),
+
     forall(between(1, Days, Day),
            (
                Y is Day // LineLength,
                X is Day mod LineLength,
-               send(DeviceCalendar, display, new(Box, box(PicWidth/LineLength - 20, PicHeight/LineLength - 20)), point(X*(PicWidth/LineLength), Y*(PicHeight/LineLength))),
+               send(DeviceCalendar, display, new(Box, box(PicWidth/LineLength - 20, PicHeight/LineLength - 20)), point(X*(PicWidth/LineLength) + 50, Y*(PicHeight/LineLength) + 50)),
                send(Box, fill_pattern, colour(white)),
                send(Box, pen, 2),
-               send(DeviceCalendar, display, new(_, text(Day)), point(X*(PicWidth/LineLength) + 5, Y*(PicHeight/LineLength) + 5))
-           )).
+               send(DeviceCalendar, display, new(_, text(Day)), point(X*(PicWidth/LineLength) + 5 + 50, Y*(PicHeight/LineLength) + 5 + 50)),
+               new(Dialog2, dialog),
+               send(Box, recogniser, click_gesture(left, '', single, and(message(@prolog, daily_calendar, Yr, Month, Day, Dialog2),
+                                                                         message(Dialog2, open)))))).
 
-% ?- time:monthly_calendar(1, 1).
+
+
+monthly_calendar(Frame) :-
+    new(Frame, frame("Monthly Calendar")),
+    send(Frame, append, new(Picture, picture)),
+    send(new(Dialog, dialog), below(Picture)),
+
+    send(Dialog, name, "Dialog"),
+    send(Picture, name, "Picture"),
+    send(Frame, keyboard_focus, Picture),
+    
+    now(Yr/Month/_Day, _Hr:_Min),
+
+    init_calendar(Yr, Month, Picture),
+    init_buttons(Yr, Month, Frame).
+
+
+% ?- time:monthly_calendar(F), send(F, open).
+%@ F = @12142357844793/frame.
+
+% ?- open_daily.
+
+% ?- manpce(key_binding).
+
+% ?- manpce(event).
+
+% ?- new(F, frame), send(F, append, new(P, picture)), send(P, name, "E"), get(F, member, "E", P).
+
+% ?- new(P, picture), send(P, recogniser, new(K, key_binding)), get(P, recogniser, A).
+
 
 daily_calendar(Yr, Month, Day, Dialog) :-
-    new(Dialog, dialog),
+    Month in 1..12,
+    days_in_month(Month, Days),
+    Day in 1..Days,
+
     PicWidth is 1800,
     PicHeight is 1200,
 
@@ -164,7 +267,8 @@ daily_calendar(Yr, Month, Day, Dialog) :-
     send(DeviceHeader, display, new(BoxHeader, box(PicWidth/1.2, 50)), point((PicWidth - PicWidth/1.2)/2, 0)),
     send(BoxHeader, fill_pattern, colour(white)),
     send(BoxHeader, pen, 2),
-    send(DeviceHeader, display, new(_, text(Day)), point(PicWidth/2, 10)),
+    format(string(DateStr), "~w ~w", [Day, Month]),
+    send(DeviceHeader, display, new(_, text(DateStr)), point(PicWidth/2, 10)),
     send(Picture, display, new(DeviceCalendar, device), point(0, 100)),
     forall(between(1, 24, Hour),
            send(DeviceCalendar, display, new(_, text(Hour)), point(0, Hour*120))),
@@ -173,8 +277,20 @@ daily_calendar(Yr, Month, Day, Dialog) :-
             send(DeviceCalendar, display, new(_, box(600, HrDiff*120 + MinDiff)), point(100, StartHr*120)),
             send(DeviceCalendar, display, new(_, text(Info)), point(105, StartHr*120 + 5)))).
 
+daily_calendar(Dialog) :-
+    new(Dialog, dialog),
+    now(Yr/Month/Day, _Hr:_Min),
+    daily_calendar(Yr, Month, Day, Dialog).
+
+
+:- multifile snap:app/2.
+:- discontiguous snap:app/2.
+
+snap:app("Monthly Calendar", time:monthly_calendar/1).
+snap:app("Daily Calendar", time:daily_calendar/1).
+
 %% send(Dialog, append, button(next, message(@prolog, daily_calendar, Yr, Month, Day))),
 
 % ?- assertz(time:entry(1/1/1, 10:0, 12:0, "Buy soybeans")).
 
-% ?- time:daily_calendar(1, 1, 1).
+% ?- time:daily_calendar(D), send(D, open).

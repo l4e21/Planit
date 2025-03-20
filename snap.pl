@@ -1,6 +1,9 @@
 :- module(snap, []).
+
 :- use_module(library(pce)).
 :- use_module(library(clpfd)).
+
+:- use_module(repl).
 :- use_module(time).
 
 save(Dir, Name, Imports) :-
@@ -27,21 +30,38 @@ save(Dir) :-
          snap,
          [library(pce),
           library(clpfd),
-          time]),
+          time,
+          repl]),
+    save(Dir,
+         repl,
+         [library(pce)]),
     save(Dir,
          time,
          [library(pce),
           library(clpfd)]).
 
+:- multifile app/2.
+:- discontiguous app/2.
+
 launcher :-
     new(Dialog, dialog("Welcome to Planit")),
-    time:now(Yr/Month/Day, _Hr:_Min),
-    time:monthly_calendar(Yr, Month, MonthlyCal),
-    time:daily_calendar(Yr, Month, Day, DailyCal),
+
+    forall(app(Name, Module:Fn/_Arity),
+           (compound_name_arguments(App1, Fn, [AppDialog]), App = Module:App1, App, send(Dialog, append, button(Name, message(AppDialog, open))))),
     
-    send(Dialog, append, button('monthly calendar', message(MonthlyCal, open)), below),
-    send(Dialog, append, button('daily calendar', message(DailyCal, open)), below),
     send(Dialog, open).
+
+
+get_method(Obj, Name, Type, Summary) :-
+    get(Obj, class, Class),
+    (get(Class, get_methods, MethodChain), Type="get"; get(Class, send_methods, MethodChain), Type="send"),
+    chain_list(MethodChain, Methods),
+    member(Method, Methods),
+    get(Method, name, Name),
+    get(Method, summary, SummaryObj),
+    get(SummaryObj, value, Summary).
+
+% ?- new(P, window), get_method(P, Name, Type, Summary).
     
 % ?- snap:launcher.
 
