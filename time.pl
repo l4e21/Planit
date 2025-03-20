@@ -228,6 +228,7 @@ monthly_calendar(Frame) :-
     init_buttons(Yr, Month, Frame).
 
 % ?- time:monthly_calendar(F), send(F, open).
+%@ F = @12884344095479/frame.
 
 % ?- manpce.
 
