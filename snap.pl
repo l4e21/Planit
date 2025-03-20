@@ -73,6 +73,14 @@ get_method(Obj, Name, Type, Summary) :-
 % ?- snap:launcher(D).
 
 % ?- save("~/prolog/timeplans/").
+%@ Already exists. Overwrite? Y/N
+%@ |: Y.
+%@ Already exists. Overwrite? Y/N
+%@ |: Y.
+%@ Already exists. Overwrite? Y/N
+%@ |: Y.
+%@ 
+%@ true.
 
 % ?- module_property(snap, exports(E)).
 
