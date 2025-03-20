@@ -228,7 +228,6 @@ monthly_calendar(Frame) :-
     init_buttons(Yr, Month, Frame).
 
 % ?- time:monthly_calendar(F), send(F, open).
-%@ F = @12884344095479/frame.
 
 % ?- manpce.
 
@@ -267,7 +266,7 @@ daily_calendar(Yr, Month, Day, Picture) :-
             send(DeviceCalendar, display, new(_, box(600, HrDiff*120 + MinDiff)), point(100, StartHr*120)),
             send(DeviceCalendar, display, new(_, text(Info)), point(105, StartHr*120 + 5)))).
 
-daily_calendar :-
+daily_calendar(Frame) :-
     new(Frame, frame("Daily Calendar")),
     send(Frame, append, new(Picture, picture)),
     now(Yr/Month/Day, _Hr:_Min),
