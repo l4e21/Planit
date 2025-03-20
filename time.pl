@@ -153,7 +153,6 @@ update_buttons(Yr, Month, Frame) :-
     init_buttons(Yr, Month, Frame),
     send(Dialog, layout).
 
-
 next_monthly_cal(Yr, Month, Frame) :-
     Month #= 12 #<==> Carryover,
     NextMonth #= Month mod 12 + 1,
@@ -164,19 +163,12 @@ next_monthly_cal(Yr, Month, Frame) :-
    
  
 last_monthly_cal(Yr, Month, Frame) :-
-    get(Frame, member, "Dialog", Dialog),
-    
     Month #= 1 #<==> Carryover,
     LastMonth #= Month - 1 + Carryover*12,
     LastYr #= Yr - Carryover,
 
     update_calendar(LastYr, LastMonth, Frame),
-
-    send(Dialog, clear),
-    
-    init_buttons(LastYr, LastMonth, Frame),
-    
-    send(Dialog, layout).
+    update_buttons(LastYr, LastMonth, Frame).
 
 update_calendar(Yr, Month, Frame) :-
     get(Frame, member, "Picture", Picture),
@@ -218,10 +210,7 @@ init_calendar(Yr, Month, Picture) :-
                send(Box, fill_pattern, colour(white)),
                send(Box, pen, 2),
                send(DeviceCalendar, display, new(_, text(Day)), point(X*(PicWidth/LineLength) + 5 + 50, Y*(PicHeight/LineLength) + 5 + 50)),
-               new(Dialog2, dialog),
-               send(Box, recogniser, click_gesture(left, '', single, and(message(@prolog, daily_calendar, Yr, Month, Day, Dialog2),
-                                                                         message(Dialog2, open)))))).
-
+               send(Box, recogniser, click_gesture(left, '', single, message(@prolog, daily_calendar, Yr, Month, Day))))).
 
 
 monthly_calendar(Frame) :-
@@ -238,9 +227,9 @@ monthly_calendar(Frame) :-
     init_calendar(Yr, Month, Picture),
     init_buttons(Yr, Month, Frame).
 
-
 % ?- time:monthly_calendar(F), send(F, open).
-%@ F = @12142357844793/frame.
+
+% ?- manpce.
 
 % ?- open_daily.
 
@@ -253,7 +242,7 @@ monthly_calendar(Frame) :-
 % ?- new(P, picture), send(P, recogniser, new(K, key_binding)), get(P, recogniser, A).
 
 
-daily_calendar(Yr, Month, Day, Dialog) :-
+daily_calendar(Yr, Month, Day, Picture) :-
     Month in 1..12,
     days_in_month(Month, Days),
     Day in 1..Days,
@@ -261,13 +250,13 @@ daily_calendar(Yr, Month, Day, Dialog) :-
     PicWidth is 1800,
     PicHeight is 1200,
 
-    send(Dialog, append, new(Picture, picture)),
     send(Picture, size, size(PicWidth, PicHeight)),
     send(Picture, display,  new(DeviceHeader, device)),
     send(DeviceHeader, display, new(BoxHeader, box(PicWidth/1.2, 50)), point((PicWidth - PicWidth/1.2)/2, 0)),
     send(BoxHeader, fill_pattern, colour(white)),
     send(BoxHeader, pen, 2),
-    format(string(DateStr), "~w ~w", [Day, Month]),
+    month_name(Month, MonthName),
+    format(string(DateStr), "~w ~s", [Day, MonthName]),
     send(DeviceHeader, display, new(_, text(DateStr)), point(PicWidth/2, 10)),
     send(Picture, display, new(DeviceCalendar, device), point(0, 100)),
     forall(between(1, 24, Hour),
@@ -277,11 +266,18 @@ daily_calendar(Yr, Month, Day, Dialog) :-
             send(DeviceCalendar, display, new(_, box(600, HrDiff*120 + MinDiff)), point(100, StartHr*120)),
             send(DeviceCalendar, display, new(_, text(Info)), point(105, StartHr*120 + 5)))).
 
-daily_calendar(Dialog) :-
-    new(Dialog, dialog),
+daily_calendar :-
+    new(Frame, frame("Daily Calendar")),
+    send(Frame, append, new(Picture, picture)),
     now(Yr/Month/Day, _Hr:_Min),
-    daily_calendar(Yr, Month, Day, Dialog).
+    daily_calendar(Yr, Month, Day, Picture).
 
+daily_calendar(Yr, Month, Day) :-
+    new(Frame, frame("Daily Calendar")),
+    send(Frame, append, new(Picture, picture)),
+    daily_calendar(Yr, Month, Day, Picture),
+    send(Frame, open).
+    
 
 :- multifile snap:app/2.
 :- discontiguous snap:app/2.
