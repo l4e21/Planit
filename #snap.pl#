@@ -64,10 +64,15 @@ get_method(Obj, Name, Type, Summary) :-
 % ?- new(P, window), get_method(P, Name, Type, Summary).
     
 % ?- launcher(D).
+%@ D = @11763349328422/dialog.
 
 % ?- save_source("~/prolog/timeplans/").
 
 % ?- save_bin("~/prolog/timeplans/").
+%@ % Disabled autoloading (loaded 62 files)
+%@ % Disabled autoloading (loaded 4 files)
+%@ % Disabled autoloading (loaded 0 files)
+%@ true.
 
 % ?- qsave_program('../timeplans/timeplan').
 
