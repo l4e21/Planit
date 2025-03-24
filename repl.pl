@@ -40,8 +40,12 @@ add_text(Dialog, PreText) :-
     send(Editor, contents, PreText),
     
     send(Group, append, Editor),
+    new(ButtonGroup, dialog_group('Buttons')),
+    send(Group, append, ButtonGroup, right),
+    send(ButtonGroup, append, new(_, button('Remove', message(@prolog, remove_group, Dialog, Group))), below),
+
     send(Dialog, append, Group, below),
-    send(Dialog, layout),
+    send(Dialog, compute),
     send(Dialog, fit).
 
 add_text(Dialog) :-
@@ -50,8 +54,12 @@ add_text(Dialog) :-
     send(Editor, name, 'Editor'),
     send(Editor, size, size(80, 5)),
     send(Group, append, Editor),
+    new(ButtonGroup, dialog_group('Buttons')),
+    send(Group, append, ButtonGroup, right),
+    send(ButtonGroup, append, new(_, button('Remove', message(@prolog, remove_group, Dialog, Group))), below),
+    
     send(Dialog, append, Group, below),
-    send(Dialog, layout),
+    send(Dialog, compute),
     send(Dialog, fit).
 
 run_editor_code(Editor, Output) :-
@@ -83,11 +91,20 @@ add_code(Dialog, PreText) :-
     send(Editor, contents, PreText),
     send(Dialog, append, Group, below),
     send(Group, append, new(_, button('Run', message(@prolog, run_editor_code, Editor, Output)))),
-    send(Dialog, layout),
+    send(Dialog, compute),
     send(Dialog, fit).
+
+% ?- manpce(dialog_group).
+
+remove_group(Dialog, Group) :-
+    send(Dialog, delete, Group),
+    send(Dialog, compute),
+    send(Dialog, fit),
+    send(Dialog, layout).
 
 add_code(Dialog) :-
     new(Group, dialog_group('Code')),
+    new(ButtonGroup, dialog_group('Buttons')),
     new(Editor, editor),
     send(Editor, name, 'Editor'),
     new(Output, editor),
@@ -98,11 +115,13 @@ add_code(Dialog) :-
     send(Group, append, Output, right),
     send(Output, editable, @off),
     send(Dialog, append, Group, below),
-    send(Group, append, new(_, button('Run', message(@prolog, run_editor_code, Editor, Output)))),
-    send(Dialog, layout),
+    send(Group, append, ButtonGroup, right),
+    send(ButtonGroup, append, new(_, button('Run', message(@prolog, run_editor_code, Editor, Output)))),
+    send(ButtonGroup, append, new(_, button('Remove', message(@prolog, remove_group, Dialog, Group))), below),
+    send(Dialog, compute), 
     send(Dialog, fit).
 
-% ?- manpce(object).
+% ?- manpce(dialog).
 
 save_page(Dialog, Pagename) :-
     get(Dialog, members, Chain),
@@ -137,8 +156,8 @@ load_page(Dialog, Pagename) :-
            -> add_text(Dialog, Text)
            ; Type == code, add_code(Dialog, Text))),
     
-    send(Dialog, fit),
-    send(Dialog, layout).
+    send(Dialog, compute),
+    send(Dialog, fit).
 
 planit_scratch :-
     new(Frame, frame("Page Editor")),
@@ -165,6 +184,7 @@ planit_scratch :-
                     message(@prolog, load_page, Dialog, TI?selection)))),
     send(Dialog, append, ButtonGroup, below),
     
+    send(Dialog, compute),
     send(Dialog, fit),
     send(Frame, open).
 

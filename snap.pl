@@ -19,10 +19,8 @@ save_source(Dir, Name, ExtraDirectives) :-
     open(FileExpanded, write, Stream),
     module_property(Name, exports(Exports)),
     with_output_to(Stream,
-                   (format(":- module(~s, ~w).\n", [Name, Exports]),
-                    
+                   (format(":- module(~s, ~w).\n", [Name, Exports]),                    
                     forall(member(Directive, ExtraDirectives), format(":- ~w.\n", [Directive])),
-                    
                     listing(Name:_))),
     close(Stream).
 
@@ -36,7 +34,7 @@ to_save(snap, [use_module(library(pce)),
 
 save_source(Dir) :-
     forall(to_save(Name, ExtraDirectives),
-           save(Dir, Name, ExtraDirectives)).
+           save_source(Dir, Name, ExtraDirectives)).
 
 save_bin(Dir) :-
     format(string(File), "~s/planit", [Dir]),
@@ -64,6 +62,7 @@ get_method(Obj, Name, Type, Summary) :-
 % ?- new(P, window), get_method(P, Name, Type, Summary).
     
 % ?- launcher(D).
+%@ D = @11795411662916/dialog.
 
 % ?- save_source("~/prolog/timeplans/").
 
