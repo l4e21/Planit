@@ -13,14 +13,14 @@ Be aware that the documented system comments won't be preserved! So if you want 
 
 ## TODO
 
-Figure out dynamic recognisers (use global objects?)
+Figure out dynamic recognisers
 
 Colour-coding on calendar
 
-Sort out the management of overlaps (Automatic columns?)
-
-See if we can figure out serialising PCE objects
+Sort out the management of overlaps (Automatic columnation on daily calendar)
 
 Code analysis tools
 
-Improve page editor (It needs it)
+Improve page editor (It needs it). Problems with layout when deleting items :( No scroll bar :( 
+
+Stupid xpce won't let me serialise classes :( probably need to do this by working out the methods and vars on the fly (maybe we can find the classes via `pce_realise`)
