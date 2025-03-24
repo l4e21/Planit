@@ -4,7 +4,7 @@
 :- use_module(library(clpfd)).
 
 :- use_module(repl, [planit_repl/0, planit_scratch/0]).
-:- use_module(datime, [monthly_calendar/0, daily_calendar/0, make_entry/3, entry/4, now/2, time_delta/3, same_time/2, before/2, after/2]).
+:- use_module(datime, [monthly_calendar/0, daily_calendar/0, make_entry/3, entry/4, now/2, time_delta/3, same_time/2, before/2, after/2, assign_cols/2]).
 
 save_source(Dir, Name, ExtraDirectives) :-
     format(string(File), "~s/~s.pl", [Dir, Name]),
@@ -28,7 +28,7 @@ save_source(Dir, Name, ExtraDirectives) :-
 
 to_save(snap, [use_module(library(pce)),
                use_module(library(clpfd)),
-               use_module(datime, [monthly_calendar/0, daily_calendar/0, make_entry/3, entry/4, now/2, time_delta/3, same_time/2, before/2, after/2]),
+               use_module(datime, [monthly_calendar/0, daily_calendar/0, make_entry/3, entry/4, now/2, time_delta/3, same_time/2, before/2, after/2, assign_cols/2]),
                use_module(repl, [planit_repl/0, planit_scratch/0])]).
 
 
@@ -74,10 +74,16 @@ get_method(Obj, Name, Type, Summary) :-
 
 % ?- assertz(datime:rainy(2025/3/D)).
 
-% ?- datime:make_entry(entry(2025/3/D, 10:0, 17:20, "Board Games"), true, time:rainy(2025/3/D)).
+% ?- datime:make_entry(entry(2025/3/D, 9:0, 17:20, "Working"), true, datime:rainy(2025/3/D)).
 
 % ?- datime:make_entry(entry(2025/3/19, 10:0, 11:40, "See Doctor"), true, true).
+
+% ?- datime:make_entry(entry(2025/3/19, 12:0, 13:00, "Buy soybeans"), true, true).
+
 
 % ?- datime:make_entry(entry(2025/3/20, 9:0, 17:0, "Work on planner"), true, true).
 
 % ?- qsave_program('../timeplans/timeplan').
+
+% ?- findall(entry(2025/3/19, A, B, I)-Body, clause(datime:entry(2025/3/19, A, B, I), Body), Cs), assign_cols(Cs, Xs).
+   

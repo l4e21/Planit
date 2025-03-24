@@ -1,4 +1,4 @@
-:- module(datime, [monthly_calendar/0, daily_calendar/0, make_entry/3, entry/4, now/2, time_delta/3, same_time/2, before/2, after/2]).
+:- module(datime, [monthly_calendar/0, daily_calendar/0, make_entry/3, entry/4, now/2, time_delta/3, same_time/2, before/2, after/2, assign_cols/2]).
 
 :- use_module(library(pce)).
 :- use_module(library(clpfd)).
@@ -229,6 +229,30 @@ monthly_calendar :-
 
 % ?- new(P, picture), send(P, recogniser, new(K, key_binding)), get(P, recogniser, A).
 
+assign_entry_columns(_, [], _, []).
+
+assign_entry_columns(entry(_, StartHr1:StartMin1, EndHr1:EndMin1, _)-_, [entry(_, StartHr2:StartMin2, EndHr2:EndMin2, _)-_|Es], R1, [R2|Rows]) :-
+    (overlapping_times(StartHr1:StartMin1, EndHr1:EndMin1, StartHr2:StartMin2, EndHr2:EndMin2)
+    -> (R2 #> R1)
+    ; true),
+    assign_entry_columns(entry(_, StartHr1:StartMin1, EndHr1:EndMin1, _)-_, Es, R1, Rows).
+
+assign_entry_columns([], []).
+
+assign_entry_columns([entry(_, StartHr1:StartMin1, EndHr1:EndMin1, _)-_|Entries], [R1|Rows]) :-
+    assign_entry_columns(entry(_, StartHr1:StartMin1, EndHr1:EndMin1, _)-_, Entries, R1, Rows),
+    assign_entry_columns(Entries, Rows).
+
+assign_cols([], []).
+
+assign_cols(Es, [1|Rows]) :-
+    length(Es, N),
+    length([1|Rows], N),
+    N #> 0,
+    Rows ins 1..N,
+    assign_entry_columns(Es, [1|Rows]),
+    label(Rows).
+
 
 daily_calendar(Yr, Month, Day, Picture) :-
     Month in 1..12,
@@ -248,12 +272,23 @@ daily_calendar(Yr, Month, Day, Picture) :-
     send(DeviceHeader, display, new(_, text(DateStr)), point(PicWidth/2, 10)),
     send(Picture, display, new(DeviceCalendar, device), point(0, 100)),
     forall(between(1, 24, Hour),
-           send(DeviceCalendar, display, new(_, text(Hour)), point(0, Hour*120))),
-    forall(entry(Yr/Month/Day, StartHr:StartMin, EndHr:EndMin, Info),
-           (time_delta(StartHr:StartMin, EndHr:EndMin, HrDiff:MinDiff),
-            send(DeviceCalendar, display, new(_, box(600, HrDiff*120 + MinDiff)), point(100, StartHr*120)),
-            send(DeviceCalendar, display, new(_, text(Info)), point(105, StartHr*120 + 5)))).
+           (
+               send(DeviceCalendar, display, new(_, line(0, Hour*120, 1200, Hour * 120))),
+               send(DeviceCalendar, display, new(_, text(Hour)), point(0, Hour*120 + 5))
+           )),
 
+    
+    findall(entry(Yr/Month/Day, StartHr:StartMin, EndHr:EndMin, Info)-Body, clause(entry(Yr/Month/Day, StartHr:StartMin, EndHr:EndMin, Info), Body), Entries),
+    assign_cols(Entries, Cols),
+    forall((nth0(N, Entries, entry(Yr/Month/Day, StartHr:StartMin, EndHr:EndMin, Info)-Body), nth0(N, Cols, Col1), Col #= Col1 - 1),
+           (time_delta(StartHr:StartMin, EndHr:EndMin, HrDiff:MinDiff),
+            send(DeviceCalendar, display, new(Box, box(400, HrDiff*120 + MinDiff)), point(100 + Col*405, StartHr*120)),
+            (Body == true
+            -> send(Box, fill_pattern, colour(white))
+            ; send(Box, fill_pattern, colour(cyan))),
+            send(DeviceCalendar, display, new(_, text(Info)), point(105 + Col*405, StartHr*120 + 5)))).
+
+% ?- manpce(colour).
 daily_calendar :-
     new(Frame, frame("Daily Calendar")),
     send(Frame, append, new(Picture, picture)),
