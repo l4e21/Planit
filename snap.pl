@@ -62,7 +62,6 @@ get_method(Obj, Name, Type, Summary) :-
 % ?- new(P, window), get_method(P, Name, Type, Summary).
     
 % ?- launcher(D).
-%@ D = @11795411662916/dialog.
 
 % ?- save_source("~/prolog/timeplans/").
 

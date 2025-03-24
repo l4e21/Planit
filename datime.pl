@@ -273,7 +273,7 @@ daily_calendar(Yr, Month, Day, Picture) :-
     send(Picture, display, new(DeviceCalendar, device), point(0, 100)),
     forall(between(1, 24, Hour),
            (
-               send(DeviceCalendar, display, new(_, line(0, Hour*120, 1200, Hour * 120))),
+               send(DeviceCalendar, display, new(_, line(0, Hour*120, 1800, Hour * 120))),
                send(DeviceCalendar, display, new(_, text(Hour)), point(0, Hour*120 + 5))
            )),
 
