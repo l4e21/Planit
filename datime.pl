@@ -1,4 +1,4 @@
-:- module(datime, [monthly_calendar/0, daily_calendar/0, make_entry/3, entry/4, now/2, time_delta/3, same_time/2, before/2, after/2, assign_cols/2]).
+:- module(datime, [monthly_calendar/0, daily_calendar/0, make_entry/4, entry/3, now/2, time_delta/3, same_time/2, before/2, after/2]).
 
 :- use_module(library(pce)).
 :- use_module(library(clpfd)).
@@ -18,7 +18,7 @@ now(Yr/Month/Day, Hr:Min) :-
     date_time_value(hour, DateTime, Hr),
     date_time_value(minute, DateTime, Min).
 
-:- dynamic entry/4.
+:- dynamic entry/3.
 
 month_name(1, "January").
 month_name(2, "February").
@@ -50,6 +50,12 @@ valid_time(Hr:Min) :-
     Hr in 0..23,
     Min in 0..59.    
 
+valid_date(Yr/Month/Day) :-
+    Yr in 0..4000,
+    Month in 1..12,
+    days_in_month(Month, Days),
+    Day in 1..Days.
+
 before(Hr1:Min1, Hr2: Min2) :-
     Hr1 * 60 + Min1 #< Hr2 * 60 + Min2.
 
@@ -74,35 +80,15 @@ overlapping_times(StartHr1:StartMin1, EndHr1:EndMin1, StartHr2:StartMin2, EndHr2
     -> true
     ; before(StartHr1:StartMin1, EndHr2:EndMin2), after(EndHr1:EndMin1, StartHr2:StartMin2)).
 
+entry_time(entry(_Y/_M/_D, Hr:Min, _Info), Hr:Min).
+entry_date(entry(Y/M/D, _Hr:_Min, _Info), Y/M/D).
+entry_info(entry(_Y/_M/_D, _Hr:_Min, Info), Info).
 
-overlapping_entry(entry(Yr/Month/Day, StartHr:StartMin, EndHr:EndMin, _),
-                  entry(Yr/Month/Day, StartHr1:StartMin1, EndHr1:EndMin1, Info1)) :-
-    entry(Yr/Month/Day, StartHr1:StartMin1, EndHr1:EndMin1, Info1),
-    overlapping_times(StartHr:StartMin, EndHr:EndMin, StartHr1:StartMin1, EndHr1:EndMin1).
+make_entry(Y/M/D, Hr:Min, Info, Conditions) :-
+    assertz(entry(Y/M/D, Hr:Min, Info) :- (valid_time(Hr:Min), valid_date(Y/M/D), Conditions)).
 
-valid_entry(entry(_Yr/_Month/_Day, StartHr:StartMin, EndHr:EndMin, _Info)) :-
-    valid_time(StartHr:StartMin),
-    valid_time(EndHr:EndMin),    
-    before(StartHr:StartMin, EndHr:EndMin).
-
-make_entry(Entry, PreConditions, PostConditions) :-
-    PreConditions,
-    valid_entry(Entry),
-    assertz(Entry :- PostConditions).
 
 % ?- use_module(library(clpfd)).
-
-% ?- datime:make_entry(entry(2025/3/19, 10:0, 11:40, "See Doctor"), true, true).
-
-% ?- datime:entry(Date, T1, T2, Info).
-
-%% We have to be very specific about the point at which we're instantiating the clpfd vars
-
-% ?- member(Hr1, [9, 11]), T1 = Hr1:Min1, T2 = Hr2:Min2, datime:valid_time(T1), datime:valid_time(T2), datime:time_delta(T1, T2, 0:30), E = entry(2025/3/19, T1, T2, "Buy Soybeans"), datime:valid_entry(E), label([Min1, Min2]), \+ datime:overlapping_entry(E, E2).
-
-%% Soft constraints example
-
-% ?- valid_time(Hr1:Min1), P1 in 0..1, P2 in 0..2, E = entry(2025/3/19, Hr1:Min1, 23:59, "Blah"), Hr1 in 7..15 #\/ P1 #= 1, Min1 in 0..10 #\/ P2 #= P1 + 1, P2 #< 2, label([Hr1, Min1]).
 
 init_buttons(Yr, Month, Frame) :-
     get(Frame, member, "Dialog", Dialog),
@@ -228,31 +214,7 @@ monthly_calendar :-
 % ?- new(F, frame), send(F, append, new(P, picture)), send(P, name, "E"), get(F, member, "E", P).
 
 % ?- new(P, picture), send(P, recogniser, new(K, key_binding)), get(P, recogniser, A).
-
-assign_entry_columns(_, [], _, []).
-
-assign_entry_columns(entry(_, StartHr1:StartMin1, EndHr1:EndMin1, _)-_, [entry(_, StartHr2:StartMin2, EndHr2:EndMin2, _)-_|Es], R1, [R2|Rows]) :-
-    (overlapping_times(StartHr1:StartMin1, EndHr1:EndMin1, StartHr2:StartMin2, EndHr2:EndMin2)
-    -> (R2 #> R1)
-    ; true),
-    assign_entry_columns(entry(_, StartHr1:StartMin1, EndHr1:EndMin1, _)-_, Es, R1, Rows).
-
-assign_entry_columns([], []).
-
-assign_entry_columns([entry(_, StartHr1:StartMin1, EndHr1:EndMin1, _)-_|Entries], [R1|Rows]) :-
-    assign_entry_columns(entry(_, StartHr1:StartMin1, EndHr1:EndMin1, _)-_, Entries, R1, Rows),
-    assign_entry_columns(Entries, Rows).
-
-assign_cols([], []).
-
-assign_cols(Es, [1|Rows]) :-
-    length(Es, N),
-    length([1|Rows], N),
-    N #> 0,
-    Rows ins 1..N,
-    assign_entry_columns(Es, [1|Rows]),
-    label(Rows).
-
+    
 
 daily_calendar(Yr, Month, Day, Picture) :-
     Month in 1..12,
@@ -261,6 +223,10 @@ daily_calendar(Yr, Month, Day, Picture) :-
 
     PicWidth is 1800,
     PicHeight is 1200,
+
+    VerticalScaleFactor is 2,
+    ColumnWidth is 400,
+    CalendarOffset is 100,
 
     send(Picture, size, size(PicWidth, PicHeight)),
     send(Picture, display,  new(DeviceHeader, device)),
@@ -271,22 +237,22 @@ daily_calendar(Yr, Month, Day, Picture) :-
     format(string(DateStr), "~w ~s", [Day, MonthName]),
     send(DeviceHeader, display, new(_, text(DateStr)), point(PicWidth/2, 10)),
     send(Picture, display, new(DeviceCalendar, device), point(0, 100)),
-    forall(between(1, 24, Hour),
+    forall(between(0, 23, Hour),
            (
-               send(DeviceCalendar, display, new(_, line(0, Hour*120, 1800, Hour * 120))),
-               send(DeviceCalendar, display, new(_, text(Hour)), point(0, Hour*120 + 5))
+               send(DeviceCalendar, display, new(_, line(0, Hour*60*VerticalScaleFactor + CalendarOffset, 1800, Hour * 60 * VerticalScaleFactor + CalendarOffset))),
+               send(DeviceCalendar, display, new(_, text(Hour)), point(0, Hour*60*VerticalScaleFactor + 5 + CalendarOffset))
            )),
-
+    findall(Info, entry(Yr/Month/Day, _, Info), AllInfos),
+    list_to_set(AllInfos, InfoSet),
+    forall(nth0(Col, InfoSet, Info),
+          send(DeviceCalendar, display, new(_, text(Info)), point(100 + Col*405 + ColumnWidth/2.5, 0))),
     
-    findall(entry(Yr/Month/Day, StartHr:StartMin, EndHr:EndMin, Info)-Body, clause(entry(Yr/Month/Day, StartHr:StartMin, EndHr:EndMin, Info), Body), Entries),
-    assign_cols(Entries, Cols),
-    forall((nth0(N, Entries, entry(Yr/Month/Day, StartHr:StartMin, EndHr:EndMin, Info)-Body), nth0(N, Cols, Col1), Col #= Col1 - 1),
-           (time_delta(StartHr:StartMin, EndHr:EndMin, HrDiff:MinDiff),
-            send(DeviceCalendar, display, new(Box, box(400, HrDiff*120 + MinDiff)), point(100 + Col*405, StartHr*120)),
-            (Body == true
-            -> send(Box, fill_pattern, colour(white))
-            ; send(Box, fill_pattern, colour(cyan))),
-            send(DeviceCalendar, display, new(_, text(Info)), point(105 + Col*405, StartHr*120 + 5)))).
+    findall(entry(Yr/Month/Day, Hr:Min, Info), (valid_time(Hr:Min), label([Hr, Min]), entry(Yr/Month/Day, Hr:Min, Info)), AllEntries),
+    forall(member(entry(Yr/Month/Day, Hr:Min, Info), AllEntries),
+           (nth0(Col, InfoSet, Info),
+            send(DeviceCalendar, display, new(Box, box(ColumnWidth, VerticalScaleFactor)), point(100 + Col*(ColumnWidth + 5), Hr*60*VerticalScaleFactor + Min*VerticalScaleFactor + CalendarOffset)),
+            send(Box, pen, 0),
+            send(Box, fill_pattern, colour(cyan)))).
 
 % ?- manpce(colour).
 daily_calendar :-
@@ -308,10 +274,3 @@ daily_calendar(Yr, Month, Day) :-
 
 snap:app("Monthly Calendar", monthly_calendar).
 snap:app("Daily Calendar", daily_calendar).
-
-%% send(Dialog, append, button(next, message(@prolog, daily_calendar, Yr, Month, Day))),
-
-% ?- assertz(datime:entry(1/1/1, 10:0, 12:0, "Buy soybeans")).
-
-% ?- datime:daily_calendar(D), send(D, open).
-
