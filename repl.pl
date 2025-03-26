@@ -191,7 +191,7 @@ load_page(Frame, Pagename) :-
             (get(Obj, name, 'Text') -> true; get(Obj, name, 'Code'))),
            send(Dialog, delete, Obj)
           ),
-    send(Dialog, size, size(1800, 600)),
+    send(Dialog, size, size(1800, 1200)),
     page(Pagename, Entries),
     forall(member(Type-Text, Entries),
            (Type == text
@@ -212,7 +212,7 @@ planit_scratch :-
     send(W, scrollbars, both),
     send(Frame, append, W),
     new(Dialog, dialog),
-    send(Dialog, size, size(1800, 600)),
+    send(Dialog, size, size(1800, 1200)),
     send(Dialog, name, 'Dialog'),
     
     new(ButtonGroup, dialog_group('Buttons')),
