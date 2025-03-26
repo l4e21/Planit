@@ -31,7 +31,9 @@ planit_repl :-
     send(D, open).
 
 
-add_text(Dialog, PreText) :-
+add_text(Frame, PreText) :-
+    get(Frame, member, 'Window', Window),
+    get(Window, member, 'Dialog', Dialog),
     new(Group, dialog_group('Text')),
     new(Editor, editor),
     send(Editor, name, 'Editor'),
@@ -43,12 +45,19 @@ add_text(Dialog, PreText) :-
     new(ButtonGroup, dialog_group('Buttons')),
     send(Group, append, ButtonGroup, right),
     send(ButtonGroup, append, new(_, button('Remove', message(@prolog, remove_group, Dialog, Group))), below),
-
     send(Dialog, append, Group, below),
+
+    get(Dialog, size, DialogSize),
+    get(DialogSize, width, W),
+    get(DialogSize, height, H),
+    send(Dialog, size, size(W, H+120)),
+    send(Dialog, layout),
     send(Dialog, compute),
     send(Dialog, fit).
 
-add_text(Dialog) :-
+add_text(Frame) :-
+    get(Frame, member, 'Window', Window),
+    get(Window, member, 'Dialog', Dialog),
     new(Group, dialog_group('Text')),
     new(Editor, editor),
     send(Editor, name, 'Editor'),
@@ -59,9 +68,15 @@ add_text(Dialog) :-
     send(ButtonGroup, append, new(_, button('Remove', message(@prolog, remove_group, Dialog, Group))), below),
     
     send(Dialog, append, Group, below),
-    send(Dialog, compute),
-    send(Dialog, fit).
+    get(Dialog, size, DialogSize),
+    get(DialogSize, width, W),
+    get(DialogSize, height, H),
+    send(Dialog, size, size(W, H+120)),
 
+    send(Dialog, layout),
+    send(Dialog, compute),
+    send(Dialog, fit).    
+ 
 run_editor_code(Editor, Output) :-
     get(Editor, contents, string(CmdStr)),
     atom_string(CmdAtom, CmdStr),
@@ -76,8 +91,11 @@ run_editor_code(Editor, Output) :-
     send(Output, caret, 0),
     send(Output, insert, Result).
 
-add_code(Dialog, PreText) :-
+add_code(Frame, PreText) :-
+    get(Frame, member, 'Window', Window),
+    get(Window, member, 'Dialog', Dialog),
     new(Group, dialog_group('Code')),
+    new(ButtonGroup, dialog_group('Buttons')),
     new(Editor, editor),
     send(Editor, name, 'Editor'),
     new(Output, editor),
@@ -89,8 +107,16 @@ add_code(Dialog, PreText) :-
     send(Group, append, Output, right),
     send(Output, editable, @off),
     send(Editor, contents, PreText),
+    send(Group, append, ButtonGroup, right),
+    send(ButtonGroup, append, new(_, button('Run', message(@prolog, run_editor_code, Editor, Output)))),
+    send(ButtonGroup, append, new(_, button('Remove', message(@prolog, remove_group, Dialog, Group))), below),
     send(Dialog, append, Group, below),
-    send(Group, append, new(_, button('Run', message(@prolog, run_editor_code, Editor, Output)))),
+    
+    get(Dialog, size, DialogSize),
+    get(DialogSize, width, W),
+    get(DialogSize, height, H),
+    send(Dialog, size, size(W, H+120)),
+    send(Dialog, layout),
     send(Dialog, compute),
     send(Dialog, fit).
 
@@ -98,11 +124,17 @@ add_code(Dialog, PreText) :-
 
 remove_group(Dialog, Group) :-
     send(Dialog, delete, Group),
+    get(Dialog, size, Size),
+    get(Size, width, W),
+    get(Size, height, H),
+    send(Dialog, size, size(W, H-120)),
     send(Dialog, compute),
     send(Dialog, fit),
     send(Dialog, layout).
 
-add_code(Dialog) :-
+add_code(Frame) :-
+    get(Frame, member, 'Window', Window),
+    get(Window, member, 'Dialog', Dialog),
     new(Group, dialog_group('Code')),
     new(ButtonGroup, dialog_group('Buttons')),
     new(Editor, editor),
@@ -114,16 +146,23 @@ add_code(Dialog) :-
     send(Group, append, Editor),
     send(Group, append, Output, right),
     send(Output, editable, @off),
-    send(Dialog, append, Group, below),
     send(Group, append, ButtonGroup, right),
     send(ButtonGroup, append, new(_, button('Run', message(@prolog, run_editor_code, Editor, Output)))),
     send(ButtonGroup, append, new(_, button('Remove', message(@prolog, remove_group, Dialog, Group))), below),
+    send(Dialog, append, Group, below),
+    get(Dialog, size, DialogSize),
+    get(DialogSize, width, W),
+    get(DialogSize, height, H),
+    send(Dialog, size, size(W, H+120)),
+    send(Dialog, layout),
     send(Dialog, compute), 
     send(Dialog, fit).
 
 % ?- manpce(dialog).
 
-save_page(Dialog, Pagename) :-
+save_page(Frame, Pagename) :-
+    get(Frame, member, 'Window', Window),
+    get(Window, member, 'Dialog', Dialog),
     get(Dialog, members, Chain),
     chain_list(Chain, L),
     findall(T-Entry,
@@ -143,49 +182,64 @@ save_page(Dialog, Pagename) :-
     assertz(page(Pagename, Entries)),
     send(@display, inform, "Done").
 
-load_page(Dialog, Pagename) :-
+load_page(Frame, Pagename) :-
+    get(Frame, member, 'Window', Window),
+    get(Window, member, 'Dialog', Dialog),
     get(Dialog, members, Chain),
     chain_list(Chain, L),
     forall((member(Obj, L),
             (get(Obj, name, 'Text') -> true; get(Obj, name, 'Code'))),
            send(Dialog, delete, Obj)
           ),
+    send(Dialog, size, size(1800, 600)),
     page(Pagename, Entries),
     forall(member(Type-Text, Entries),
            (Type == text
-           -> add_text(Dialog, Text)
-           ; Type == code, add_code(Dialog, Text))),
-    
+           -> add_text(Frame, Text)
+           ; Type == code, add_code(Frame, Text))),
+
+    send(Dialog, layout),
     send(Dialog, compute),
     send(Dialog, fit).
 
 planit_scratch :-
     new(Frame, frame("Page Editor")),
-    send(Frame, append, new(Dialog, dialog)),
-    send(Dialog, name, "Dialog"),
+    send(Frame, size, size(1800, 1200)),
+    
+    new(W, window),
+    send(W, size, size(1800, 1200)),
+    send(W, name, 'Window'),
+    send(W, scrollbars, both),
+    send(Frame, append, W),
+    new(Dialog, dialog),
+    send(Dialog, size, size(1800, 600)),
+    send(Dialog, name, 'Dialog'),
     
     new(ButtonGroup, dialog_group('Buttons')),
     send(ButtonGroup, append, new(TI, text_item('page name')), below),
     send(ButtonGroup, append,
          new(_,
              button('+ Text',
-                    message(@prolog, add_text, Dialog)))),
+                    message(@prolog, add_text, Frame)))),
     send(ButtonGroup, append,
          new(_,
              button('+ Code',
-                    message(@prolog, add_code, Dialog)))),
+                    message(@prolog, add_code, Frame)))),
     send(ButtonGroup, append,
          new(_,
              button('Save',
-                    message(@prolog, save_page, Dialog, TI?selection)))),
+                    message(@prolog, save_page, Frame, TI?selection)))),
     send(ButtonGroup, append,
          new(_,
              button('Load',
-                    message(@prolog, load_page, Dialog, TI?selection)))),
+                    message(@prolog, load_page, Frame, TI?selection)))),
     send(Dialog, append, ButtonGroup, below),
     
+    send(Dialog, layout),
     send(Dialog, compute),
     send(Dialog, fit),
+    
+    send(W, display, Dialog, point(0, 0)),
     send(Frame, open).
 
 :- multifile snap:app/2.
