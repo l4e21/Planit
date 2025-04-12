@@ -5,6 +5,8 @@
 
 :- use_module(repl, [planit_repl/0, planit_scratch/0]).
 :- use_module(datime, [monthly_calendar/0, daily_calendar/0, make_entry/3, entry/4, now/2, time_delta/3, same_time/2, before/2, after/2]).
+:- use_module(twokki, [connection/2]).
+:- use_module(language, [cn_en/2, pr_en/2, pronoun/1, connective/1, noun/1, verb/1, pinyin/2, radicals/2]).
 
 save_source(Dir, Name, ExtraDirectives) :-
     format(string(File), "~s/~s.pl", [Dir, Name]),
@@ -29,7 +31,9 @@ save_source(Dir, Name, ExtraDirectives) :-
 to_save(snap, [use_module(library(pce)),
                use_module(library(clpfd)),
                use_module(datime, [monthly_calendar/0, daily_calendar/0, make_entry/3, entry/4, now/2, time_delta/3, same_time/2, before/2, after/2]),
-               use_module(repl, [planit_repl/0, planit_scratch/0])]).
+               use_module(repl, [planit_repl/0, planit_scratch/0]),
+               use_module(twokki, [connection/2]),
+               use_module(language, [cn_en/2, pr_en/2, pronoun/1, connective/1, noun/1, verb/1, pinyin/2, radicals/2])]).
 
 
 save_source(Dir) :-
@@ -80,3 +84,9 @@ get_method(Obj, Name, Type, Summary) :-
 % ?- datime:make_entry(entry(2025/3/20, 9:0, 17:0, "Work on planner"), true, true).
 
 % ?- qsave_program('../timeplans/timeplan').
+
+% ?- twokki:connection(X, Y).
+
+% ?- language:cn_en(X, "person").
+%@ X = "亻" ;
+%@ X = "人".
