@@ -46,11 +46,14 @@ add_text(Frame, PreText) :-
     send(Group, append, ButtonGroup, right),
     send(ButtonGroup, append, new(_, button('Remove', message(@prolog, remove_group, Dialog, Group))), below),
     send(Dialog, append, Group, below),
-
     get(Dialog, size, DialogSize),
     get(DialogSize, width, W),
     get(DialogSize, height, H),
     send(Dialog, size, size(W, H+120)),
+    send(Editor, recogniser, new(K, key_binding)),
+    send(K, function, '\\C-c', message(Editor?selection, copy)),
+    send(K, function, '\\C-v', message(Editor, paste)),
+    
     send(Dialog, layout),
     send(Dialog, compute),
     send(Dialog, fit).
@@ -61,17 +64,21 @@ add_text(Frame) :-
     new(Group, dialog_group('Text')),
     new(Editor, editor),
     send(Editor, name, 'Editor'),
+    
     send(Editor, size, size(80, 5)),
+    
     send(Group, append, Editor),
     new(ButtonGroup, dialog_group('Buttons')),
     send(Group, append, ButtonGroup, right),
     send(ButtonGroup, append, new(_, button('Remove', message(@prolog, remove_group, Dialog, Group))), below),
-    
     send(Dialog, append, Group, below),
     get(Dialog, size, DialogSize),
     get(DialogSize, width, W),
     get(DialogSize, height, H),
     send(Dialog, size, size(W, H+120)),
+    send(Editor, recogniser, new(K, key_binding)),
+    send(K, function, '\\C-c', message(Editor?selection, copy)),
+    send(K, function, '\\C-v', message(Editor, paste)),
 
     send(Dialog, layout),
     send(Dialog, compute),
@@ -111,6 +118,12 @@ add_code(Frame, PreText) :-
     send(ButtonGroup, append, new(_, button('Run', message(@prolog, run_editor_code, Editor, Output)))),
     send(ButtonGroup, append, new(_, button('Remove', message(@prolog, remove_group, Dialog, Group))), below),
     send(Dialog, append, Group, below),
+    send(Editor, recogniser, new(K1, key_binding)),
+    send(K1, function, '\\C-c', message(Editor?selection, copy)),
+    send(K1, function, '\\C-v', message(Editor, paste)),
+    send(Output, recogniser, new(K2, key_binding)),
+    send(K2, function, '\\C-c', message(Output?selection, copy)),
+    send(K2, function, '\\C-v', message(Output, paste)),
     
     get(Dialog, size, DialogSize),
     get(DialogSize, width, W),
@@ -154,12 +167,16 @@ add_code(Frame) :-
     get(DialogSize, width, W),
     get(DialogSize, height, H),
     send(Dialog, size, size(W, H+120)),
+    send(Editor, recogniser, new(K1, key_binding)),
+    send(K1, function, '\\C-c', message(Editor?selection, copy)),
+    send(K1, function, '\\C-v', message(Editor, paste)),
+    send(Output, recogniser, new(K2, key_binding)),
+    send(K2, function, '\\C-c', message(Output?selection, copy)),
+    send(K2, function, '\\C-v', message(Output, paste)),
+    
     send(Dialog, layout),
     send(Dialog, compute), 
-    send(Dialog, fit),
-    send(Window, compute_bounding_box),
-    send(Window, flush).
-% ?- manpce(dialog).
+    send(Dialog, fit).
 
 save_page(Frame, Pagename) :-
     get(Frame, member, 'Window', Window),
