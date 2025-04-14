@@ -66,6 +66,7 @@ get_method(Obj, Name, Type, Summary) :-
 % ?- new(P, window), get_method(P, Name, Type, Summary).
     
 % ?- launcher(D).
+%@ D = @12793955435256/dialog.
 
 % ?- save_source("~/prolog/timeplans/").
 
@@ -88,5 +89,3 @@ get_method(Obj, Name, Type, Summary) :-
 % ?- twokki:connection(X, Y).
 
 % ?- language:cn_en(X, "person").
-%@ X = "亻" ;
-%@ X = "人".

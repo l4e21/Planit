@@ -156,8 +156,9 @@ add_code(Frame) :-
     send(Dialog, size, size(W, H+120)),
     send(Dialog, layout),
     send(Dialog, compute), 
-    send(Dialog, fit).
-
+    send(Dialog, fit),
+    send(Window, compute_bounding_box),
+    send(Window, flush).
 % ?- manpce(dialog).
 
 save_page(Frame, Pagename) :-
@@ -191,7 +192,7 @@ load_page(Frame, Pagename) :-
             (get(Obj, name, 'Text') -> true; get(Obj, name, 'Code'))),
            send(Dialog, delete, Obj)
           ),
-    send(Dialog, size, size(1800, 1200)),
+    send(Dialog, size, size(3600, 1200)),
     page(Pagename, Entries),
     forall(member(Type-Text, Entries),
            (Type == text
@@ -204,15 +205,16 @@ load_page(Frame, Pagename) :-
 
 planit_scratch :-
     new(Frame, frame("Page Editor")),
-    send(Frame, size, size(1800, 1200)),
+    get(@display, size, Size),
+    send(Frame, size, Size),
     
     new(W, window),
-    send(W, size, size(1800, 1200)),
+    send(W, size, Size),
     send(W, name, 'Window'),
     send(W, scrollbars, both),
     send(Frame, append, W),
     new(Dialog, dialog),
-    send(Dialog, size, size(1800, 1200)),
+    send(Dialog, size, Size),
     send(Dialog, name, 'Dialog'),
     
     new(ButtonGroup, dialog_group('Buttons')),
