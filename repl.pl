@@ -30,60 +30,6 @@ planit_repl :-
     send(D, default_button, enter),
     send(D, open).
 
-
-add_text(Frame, PreText) :-
-    get(Frame, member, 'Window', Window),
-    get(Window, member, 'Dialog', Dialog),
-    new(Group, dialog_group('Text')),
-    new(Editor, editor),
-    send(Editor, name, 'Editor'),
-    
-    send(Editor, size, size(80, 5)),
-    send(Editor, contents, PreText),
-    
-    send(Group, append, Editor),
-    new(ButtonGroup, dialog_group('Buttons')),
-    send(Group, append, ButtonGroup, right),
-    send(ButtonGroup, append, new(_, button('Remove', message(@prolog, remove_group, Dialog, Group))), below),
-    send(Dialog, append, Group, below),
-    get(Dialog, size, DialogSize),
-    get(DialogSize, width, W),
-    get(DialogSize, height, H),
-    send(Dialog, size, size(W, H+120)),
-    send(Editor, recogniser, new(K, key_binding)),
-    send(K, function, '\\C-c', message(Editor?selection, copy)),
-    send(K, function, '\\C-v', message(Editor, paste)),
-    
-    send(Dialog, layout),
-    send(Dialog, compute),
-    send(Dialog, fit).
-
-add_text(Frame) :-
-    get(Frame, member, 'Window', Window),
-    get(Window, member, 'Dialog', Dialog),
-    new(Group, dialog_group('Text')),
-    new(Editor, editor),
-    send(Editor, name, 'Editor'),
-    
-    send(Editor, size, size(80, 5)),
-    
-    send(Group, append, Editor),
-    new(ButtonGroup, dialog_group('Buttons')),
-    send(Group, append, ButtonGroup, right),
-    send(ButtonGroup, append, new(_, button('Remove', message(@prolog, remove_group, Dialog, Group))), below),
-    send(Dialog, append, Group, below),
-    get(Dialog, size, DialogSize),
-    get(DialogSize, width, W),
-    get(DialogSize, height, H),
-    send(Dialog, size, size(W, H+120)),
-    send(Editor, recogniser, new(K, key_binding)),
-    send(K, function, '\\C-c', message(Editor?selection, copy)),
-    send(K, function, '\\C-v', message(Editor, paste)),
-
-    send(Dialog, layout),
-    send(Dialog, compute),
-    send(Dialog, fit).    
- 
 run_editor_code(Editor, Output) :-
     get(Editor, contents, string(CmdStr)),
     atom_string(CmdAtom, CmdStr),
@@ -98,57 +44,15 @@ run_editor_code(Editor, Output) :-
     send(Output, caret, 0),
     send(Output, insert, Result).
 
-add_code(Frame, PreText) :-
+
+group('text').
+group('code').
+
+
+add('code', Frame) :-
     get(Frame, member, 'Window', Window),
     get(Window, member, 'Dialog', Dialog),
-    new(Group, dialog_group('Code')),
-    new(ButtonGroup, dialog_group('Buttons')),
-    new(Editor, editor),
-    send(Editor, name, 'Editor'),
-    new(Output, editor),
-    send(Output, name, 'Output'),
-    
-    send(Editor, size, size(80, 5)),
-    send(Output, size, size(80, 5)),
-    send(Group, append, Editor),
-    send(Group, append, Output, right),
-    send(Output, editable, @off),
-    send(Editor, contents, PreText),
-    send(Group, append, ButtonGroup, right),
-    send(ButtonGroup, append, new(_, button('Run', message(@prolog, run_editor_code, Editor, Output)))),
-    send(ButtonGroup, append, new(_, button('Remove', message(@prolog, remove_group, Dialog, Group))), below),
-    send(Dialog, append, Group, below),
-    send(Editor, recogniser, new(K1, key_binding)),
-    send(K1, function, '\\C-c', message(Editor?selection, copy)),
-    send(K1, function, '\\C-v', message(Editor, paste)),
-    send(Output, recogniser, new(K2, key_binding)),
-    send(K2, function, '\\C-c', message(Output?selection, copy)),
-    send(K2, function, '\\C-v', message(Output, paste)),
-    
-    get(Dialog, size, DialogSize),
-    get(DialogSize, width, W),
-    get(DialogSize, height, H),
-    send(Dialog, size, size(W, H+120)),
-    send(Dialog, layout),
-    send(Dialog, compute),
-    send(Dialog, fit).
-
-% ?- manpce(dialog_group).
-
-remove_group(Dialog, Group) :-
-    send(Dialog, delete, Group),
-    get(Dialog, size, Size),
-    get(Size, width, W),
-    get(Size, height, H),
-    send(Dialog, size, size(W, H-120)),
-    send(Dialog, compute),
-    send(Dialog, fit),
-    send(Dialog, layout).
-
-add_code(Frame) :-
-    get(Frame, member, 'Window', Window),
-    get(Window, member, 'Dialog', Dialog),
-    new(Group, dialog_group('Code')),
+    new(Group, dialog_group('code')),
     new(ButtonGroup, dialog_group('Buttons')),
     new(Editor, editor),
     send(Editor, name, 'Editor'),
@@ -178,44 +82,157 @@ add_code(Frame) :-
     send(Dialog, compute), 
     send(Dialog, fit).
 
+add('text', Frame) :-
+    get(Frame, member, 'Window', Window),
+    get(Window, member, 'Dialog', Dialog),
+    new(Group, dialog_group('text')),
+    new(Editor, editor),
+    send(Editor, name, 'Editor'),
+    
+    send(Editor, size, size(80, 5)),
+    
+    send(Group, append, Editor),
+    new(ButtonGroup, dialog_group('Buttons')),
+    send(Group, append, ButtonGroup, right),
+    send(ButtonGroup, append, new(_, button('Remove', message(@prolog, remove_group, Dialog, Group))), below),
+    send(Dialog, append, Group, below),
+    get(Dialog, size, DialogSize),
+    get(DialogSize, width, W),
+    get(DialogSize, height, H),
+    send(Dialog, size, size(W, H+120)),
+    send(Editor, recogniser, new(K, key_binding)),
+    send(K, function, '\\C-c', message(Editor?selection, copy)),
+    send(K, function, '\\C-v', message(Editor, paste)),
+
+    send(Dialog, layout),
+    send(Dialog, compute),
+    send(Dialog, fit).
+    
+add('code', Frame, PreText) :-
+    get(Frame, member, 'Window', Window),
+    get(Window, member, 'Dialog', Dialog),
+    new(Group, dialog_group('code')),
+    new(ButtonGroup, dialog_group('Buttons')),
+    new(Editor, editor),
+    send(Editor, name, 'Editor'),
+    new(Output, editor),
+    send(Output, name, 'Output'),
+    
+    send(Editor, size, size(80, 5)),
+    send(Output, size, size(80, 5)),
+    send(Group, append, Editor),
+    send(Group, append, Output, right),
+    send(Output, editable, @off),
+    send(Editor, contents, PreText),
+    send(Group, append, ButtonGroup, right),
+    send(ButtonGroup, append, new(_, button('Run', message(@prolog, run_editor_code, Editor, Output)))),
+    send(ButtonGroup, append, new(_, button('Remove', message(@prolog, remove_group, Dialog, Group))), below),
+    send(Dialog, append, Group, below),
+    send(Editor, recogniser, new(K1, key_binding)),
+    send(K1, function, '\\C-c', message(Editor?selection, copy)),
+    send(K1, function, '\\C-v', message(Editor, paste)),
+    send(Output, recogniser, new(K2, key_binding)),
+    send(K2, function, '\\C-c', message(Output?selection, copy)),
+    send(K2, function, '\\C-v', message(Output, paste)),
+    
+    get(Dialog, size, DialogSize),
+    get(DialogSize, width, W),
+    get(DialogSize, height, H),
+    send(Dialog, size, size(W, H+120)),
+    send(Dialog, layout),
+    send(Dialog, compute),
+    send(Dialog, fit).
+
+add('text', Frame, PreText) :-
+    get(Frame, member, 'Window', Window),
+    get(Window, member, 'Dialog', Dialog),
+    new(Group, dialog_group('text')),
+    new(Editor, editor),
+    send(Editor, name, 'Editor'),
+    
+    send(Editor, size, size(80, 5)),
+    send(Editor, contents, PreText),
+    
+    send(Group, append, Editor),
+    new(ButtonGroup, dialog_group('Buttons')),
+    send(Group, append, ButtonGroup, right),
+    send(ButtonGroup, append, new(_, button('Remove', message(@prolog, remove_group, Dialog, Group))), below),
+    send(Dialog, append, Group, below),
+    get(Dialog, size, DialogSize),
+    get(DialogSize, width, W),
+    get(DialogSize, height, H),
+    send(Dialog, size, size(W, H+120)),
+    send(Editor, recogniser, new(K, key_binding)),
+    send(K, function, '\\C-c', message(Editor?selection, copy)),
+    send(K, function, '\\C-v', message(Editor, paste)),
+    
+    send(Dialog, layout),
+    send(Dialog, compute),
+    send(Dialog, fit).
+
+content('text', Group, Content) :-
+    get(Group, member, 'Editor', Editor),
+    get(Editor, contents, string(Content)).
+content('code', Group, Content) :-
+    get(Group, member, 'Editor', Editor),
+    get(Editor, contents, string(Content)).
+
+% ?- manpce(chain).
+
+%% Any kind of destructive update will require something along these lines because XPCE dialogs suck lol
+remove_group(Dialog, Group) :-
+    get(Dialog, size, Size),
+    get(Size, width, W),
+    get(Size, height, H),
+    send(Dialog, size, size(W, H-120)),
+    get(Dialog, members, Chain),
+    send(Chain, delete, Group),
+    send(Group, for_all, message(Group, delete, @arg1)),
+    chain_list(Chain, L),
+    send(Dialog, clear),
+    send(Chain, clear),
+    %% send(Chain, for_all, message(@prolog, format, '~w\n', @arg1)),
+    forall(member(X, L),
+            send(Dialog, append, X)),
+    send(Dialog, compute),
+    send(Dialog, fit),
+    send(Dialog, layout).
+
 save_page(Frame, Pagename) :-
     get(Frame, member, 'Window', Window),
     get(Window, member, 'Dialog', Dialog),
     get(Dialog, members, Chain),
     chain_list(Chain, L),
-    findall(T-Entry,
+    findall(GroupName-Content,
             (
                 member(Obj, L),
-                (get(Obj, name, 'Code')
-                -> T = code,
-                   get(Obj, member, 'Editor', Editor),
-                   get(Editor, contents, string(Entry))
-                ;  get(Obj, name, 'Text'),
-                   T = text,
-                   get(Obj, member, 'Editor', Editor),
-                   get(Editor, contents, string(Entry)))
+                get(Obj, name, GroupName),
+                content(GroupName, Obj, Content)
             ),
             Entries),
     retractall(page(Pagename, _)),
     assertz(page(Pagename, Entries)),
     send(@display, inform, "Done").
 
+% ?- manpce(chain).
+
 load_page(Frame, Pagename) :-
     get(Frame, member, 'Window', Window),
     get(Window, member, 'Dialog', Dialog),
+    
     get(Dialog, members, Chain),
     chain_list(Chain, L),
-    forall((member(Obj, L),
-            (get(Obj, name, 'Text') -> true; get(Obj, name, 'Code'))),
-           send(Dialog, delete, Obj)
-          ),
-    send(Dialog, size, size(3600, 1200)),
-    page(Pagename, Entries),
-    forall(member(Type-Text, Entries),
-           (Type == text
-           -> add_text(Frame, Text)
-           ; Type == code, add_code(Frame, Text))),
 
+    forall(group(GroupName),           
+           forall((member(Obj, L), get(Obj, name, GroupName)),
+                  remove_group(Dialog, Obj))),
+    
+    get(@display, size, Size),
+    send(Dialog, size, Size),
+    
+    page(Pagename, Entries),
+    forall(member(GroupName-Content, Entries),
+           add(GroupName, Frame, Content)),
     send(Dialog, layout),
     send(Dialog, compute),
     send(Dialog, fit).
@@ -236,14 +253,12 @@ planit_scratch :-
     
     new(ButtonGroup, dialog_group('Buttons')),
     send(ButtonGroup, append, new(TI, text_item('page name')), below),
-    send(ButtonGroup, append,
-         new(_,
-             button('+ Text',
-                    message(@prolog, add_text, Frame)))),
-    send(ButtonGroup, append,
-         new(_,
-             button('+ Code',
-                    message(@prolog, add_code, Frame)))),
+    forall(group(GroupName),
+           (format(string(AddGroupName), "+ ~w", [GroupName]),
+            send(ButtonGroup, append,
+                 new(_,
+                     button(AddGroupName,
+                            message(@prolog, add, GroupName, Frame)))))),
     send(ButtonGroup, append,
          new(_,
              button('Save',
